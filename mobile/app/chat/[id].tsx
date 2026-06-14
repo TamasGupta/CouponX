@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
+import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
+import { getSocket, connectSocket } from '../../api/socket';
 import { colors } from '../../constants/colors';
 import { useAuthStore } from '../../store/auth';
 
@@ -17,33 +18,80 @@ export default function ChatScreen() {
   const { id } = useLocalSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const token = useAuthStore((s) => s.token);
   const userId = useAuthStore((s) => s.user?.id);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!token) { router.replace('/(auth)/login'); return; }
     client.get(`/chat/conversations/${id}/messages`)
-      .then(({ data }) => setMessages(data));
+      .then(({ data }) => setMessages(data))
+      .finally(() => setIsLoading(false));
   }, [id]);
 
-  const sendMessage = async () => {
+  useEffect(() => {
+    if (!token) return;
+    const socket = connectSocket(token);
+
+    const onConnect = () => {
+      socket.emit('join:conversation', id);
+    };
+
+    const onMessage = (message: Message) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m._id === message._id)) return prev;
+        return [...prev, message];
+      });
+    };
+
+    if (socket.connected) {
+      socket.emit('join:conversation', id);
+    }
+    socket.on('connect', onConnect);
+    socket.on('message:new', onMessage);
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('message:new', onMessage);
+      socket.emit('leave:conversation', id);
+    };
+  }, [id, token]);
+
+  const sendMessage = () => {
     if (!text.trim()) return;
     try {
-      const { data } = await client.post(`/chat/conversations/${id}/messages`, { text });
-      setMessages((prev) => [...prev, data]);
+      getSocket().emit('message:send', { conversationId: id, text });
       setText('');
     } catch {}
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={[styles.container, { paddingBottom: keyboardHeight }]}>
       <FlatList
         ref={flatListRef}
         data={messages}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
         renderItem={({ item }) => {
-          const isMine = item.sender._id === userId;
+          const senderId = item.sender._id || item.sender.id;
+          const isMine = senderId === userId;
           return (
             <View style={[styles.bubble, isMine ? styles.myBubble : styles.theirBubble]}>
               <Text style={[styles.messageText, isMine && styles.myMessageText]}>{item.text}</Text>
@@ -67,7 +115,7 @@ export default function ChatScreen() {
           <Ionicons name="send" size={20} color={colors.white} />
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

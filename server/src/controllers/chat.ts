@@ -3,6 +3,30 @@ import { Conversation } from '../models/Conversation';
 import { Message } from '../models/Message';
 import { AuthRequest } from '../middleware/auth';
 
+export async function createConversation(req: AuthRequest, res: Response) {
+  try {
+    const { participantId } = req.body;
+    if (!participantId) {
+      return res.status(400).json({ message: 'participantId is required' });
+    }
+    if (participantId === req.userId) {
+      return res.status(400).json({ message: 'Cannot start conversation with yourself' });
+    }
+    let conversation = await Conversation.findOne({
+      participants: { $all: [req.userId, participantId], $size: 2 },
+    });
+    if (!conversation) {
+      conversation = await Conversation.create({
+        participants: [req.userId, participantId],
+      });
+    }
+    await conversation.populate('participants', 'name avatar');
+    res.json(conversation);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
 export async function getConversations(req: AuthRequest, res: Response) {
   try {
     const conversations = await Conversation.find({

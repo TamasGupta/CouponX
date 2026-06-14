@@ -5,7 +5,7 @@ import { useAuthStore } from '../../store/auth';
 import { colors } from '../../constants/colors';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, token } = useAuthStore();
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure?', [
@@ -13,6 +13,21 @@ export default function ProfileScreen() {
       { text: 'Logout', onPress: () => { logout(); router.replace('/(auth)/login'); } },
     ]);
   };
+
+  if (!token) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.center}>
+          <Ionicons name="person-circle-outline" size={72} color={colors.gray} />
+          <Text style={styles.loginTitle}>Login to view your profile</Text>
+          <Text style={styles.loginSub}>Manage your listings, orders, and more</Text>
+          <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/(auth)/login')}>
+            <Text style={styles.loginBtnText}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -25,19 +40,25 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.menu}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/listings')}>
           <Ionicons name="pricetags-outline" size={22} color={colors.primary} />
           <Text style={styles.menuText}>My Listings</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.gray} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/reviews')}>
           <Ionicons name="star-outline" size={22} color={colors.primary} />
           <Text style={styles.menuText}>My Reviews</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.gray} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/conversations')}>
+          <Ionicons name="chatbubbles-outline" size={22} color={colors.primary} />
+          <Text style={styles.menuText}>Messages</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.gray} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/notifications')}>
           <Ionicons name="notifications-outline" size={22} color={colors.primary} />
           <Text style={styles.menuText}>Notifications</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.gray} />
@@ -54,6 +75,11 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  loginTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginTop: 16 },
+  loginSub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: 8, marginBottom: 24 },
+  loginBtn: { backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 40, paddingVertical: 14 },
+  loginBtnText: { color: colors.white, fontSize: 16, fontWeight: '600' },
   header: { alignItems: 'center', paddingVertical: 32 },
   avatar: {
     width: 80, height: 80, borderRadius: 40,

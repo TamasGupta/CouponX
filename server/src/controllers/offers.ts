@@ -52,14 +52,19 @@ export async function getOffer(req: AuthRequest, res: Response) {
 
 export async function createOffer(req: AuthRequest, res: Response) {
   try {
-    const { title, description, originalPrice, sellingPrice, expiryDate, category, images } =
+    const { title, description, originalPrice, sellingPrice, couponCode, expiryDate, category, images } =
       req.body;
+
+    if (!couponCode?.trim()) {
+      return res.status(400).json({ message: 'Coupon code is required' });
+    }
 
     const offer = await Offer.create({
       title,
       description,
       originalPrice,
       sellingPrice,
+      couponCode: couponCode.trim(),
       expiryDate,
       category,
       images: images || [],
