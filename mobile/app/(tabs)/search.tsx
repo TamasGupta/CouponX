@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { colors } from '../../constants/colors';
-import { categories } from '../../constants/categories';
+import { useCategoriesStore } from '../../store/categories';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const categories = useCategoriesStore((s) => s.categories);
+  const fetchCategories = useCategoriesStore((s) => s.fetchCategories);
+
+  useEffect(() => { fetchCategories(); }, []);
 
   const search = async () => {
     setIsLoading(true);
@@ -51,21 +55,24 @@ export default function SearchScreen() {
       <FlatList
         horizontal
         data={categories}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.slug}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categories}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[styles.categoryChip, selectedCategory === item.id && styles.categoryChipActive]}
-            onPress={() => setSelectedCategory(selectedCategory === item.id ? '' : item.id)}
+            style={[styles.categoryChip, { backgroundColor: item.color || colors.white }, selectedCategory === item.slug && styles.categoryChipActive]}
+            onPress={() => setSelectedCategory(selectedCategory === item.slug ? '' : item.slug)}
           >
+            {item.image ? (
+              <Image source={{ uri: item.image }} style={styles.chipBg} />
+            ) : null}
             <Ionicons
               name={item.icon as any}
-              size={16}
-              color={selectedCategory === item.id ? colors.white : colors.primary}
+              size={14}
+              color={selectedCategory === item.slug ? colors.white : '#333'}
             />
-            <Text style={[styles.categoryLabel, selectedCategory === item.id && styles.categoryLabelActive]}>
-              {item.label}
+            <Text style={[styles.categoryLabel, selectedCategory === item.slug && styles.categoryLabelActive]}>
+              {item.name}
             </Text>
           </TouchableOpacity>
         )}
@@ -75,6 +82,7 @@ export default function SearchScreen() {
         data={results}
         keyExtractor={(item: any) => item._id}
         contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
         renderItem={({ item }: any) => (
           <TouchableOpacity style={styles.card} onPress={() => router.push(`/offer/${item._id}`)}>
             <View style={styles.cardRow}>
@@ -110,25 +118,29 @@ const styles = StyleSheet.create({
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
     marginRight: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
+    overflow: 'hidden',
   },
-  categoryChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  categoryLabel: { fontSize: 13, color: colors.primary, marginLeft: 6 },
+  categoryChipActive: { opacity: 0.8 },
+  chipBg: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', resizeMode: 'cover', borderRadius: 14 },
+  categoryLabel: { fontSize: 12, color: '#333', marginLeft: 5, fontWeight: '600' },
   categoryLabelActive: { color: colors.white },
   list: { paddingHorizontal: 16 },
   card: {
     backgroundColor: colors.white,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 10,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 48 },
   cardTitle: { fontSize: 15, fontWeight: '600', flex: 1, color: colors.text },
   cardPrice: { fontSize: 15, fontWeight: '700', color: colors.primary, marginLeft: 12 },
   cardSeller: { fontSize: 12, color: colors.gray, marginTop: 6 },

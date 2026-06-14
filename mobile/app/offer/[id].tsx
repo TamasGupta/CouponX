@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Dimensions } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { colors } from '../../constants/colors';
 import { useAuthStore } from '../../store/auth';
+
+const { width } = Dimensions.get('window');
 
 export default function OfferDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -53,11 +55,30 @@ export default function OfferDetailScreen() {
   const isOwner = user?.id === offer.seller?._id;
   const canClaim = token && !isOwner && offer.status === 'active';
 
+  const startChat = async () => {
+    if (!offer.seller?._id) {
+      Alert.alert('Error', 'Seller information not available');
+      return;
+    }
+    try {
+      const { data } = await client.post('/chat/conversations', {
+        participantId: offer.seller._id,
+      });
+      router.push(`/chat/${data._id}`);
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'Failed to start chat');
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.imagePlaceholder}>
-        <Ionicons name="pricetags-outline" size={64} color={colors.grayLight} />
-      </View>
+      {offer.images?.length > 0 ? (
+        <Image source={{ uri: offer.images[0] }} style={styles.image} />
+      ) : (
+        <View style={styles.imagePlaceholder}>
+          <Ionicons name="pricetags-outline" size={64} color={colors.grayLight} />
+        </View>
+      )}
 
       <View style={styles.section}>
         <View style={styles.titleRow}>
@@ -102,11 +123,17 @@ export default function OfferDetailScreen() {
       </View>
 
       {canClaim && (
-        <TouchableOpacity style={styles.claimButton} onPress={handleClaim} disabled={isClaiming}>
-          <Text style={styles.claimText}>
-            {isClaiming ? 'Claiming...' : offer.sellingPrice === 0 ? 'Claim for Free' : `Buy for ₹${offer.sellingPrice}`}
-          </Text>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity style={styles.claimButton} onPress={handleClaim} disabled={isClaiming}>
+            <Text style={styles.claimText}>
+              {isClaiming ? 'Claiming...' : offer.sellingPrice === 0 ? 'Claim for Free' : `Buy for ₹${offer.sellingPrice}`}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.messageButton} onPress={startChat}>
+            <Ionicons name="chatbubble-outline" size={18} color={colors.primary} />
+            <Text style={styles.messageButtonText}>Message Seller</Text>
+          </TouchableOpacity>
+        </>
       )}
 
       {isOwner && (
@@ -123,6 +150,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   content: { paddingBottom: 40 },
+  image: {
+    width, height: 260,
+    borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
+  },
   imagePlaceholder: {
     height: 200, backgroundColor: colors.white,
     alignItems: 'center', justifyContent: 'center',
@@ -152,6 +183,12 @@ const styles = StyleSheet.create({
     borderRadius: 12, padding: 16, alignItems: 'center',
   },
   claimText: { color: colors.white, fontSize: 16, fontWeight: '600' },
+  messageButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    marginHorizontal: 20, marginTop: 12,
+    borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.primary, gap: 8,
+  },
+  messageButtonText: { fontSize: 15, fontWeight: '600', color: colors.primary },
   ownerNotice: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     marginTop: 20, gap: 8,

@@ -26,7 +26,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "CouponX needs access to your photos to upload coupon images.",
+          "cameraPermission": "CouponX needs access to your camera to take coupon photos."
+        }
+      ]
     ],
     "extra": {
       "router": {},

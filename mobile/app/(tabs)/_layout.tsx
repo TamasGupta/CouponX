@@ -1,3 +1,4 @@
+import { Image } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/colors';
@@ -17,6 +18,9 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          headerTitle: () => (
+            <Image source={require('../../assets/icon.png')} style={{ width: 28, height: 28, borderRadius: 7 }} />
+          ),
           tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
         }}
       />

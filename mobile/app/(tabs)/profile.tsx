@@ -25,19 +25,25 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.menu}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/listings')}>
           <Ionicons name="pricetags-outline" size={22} color={colors.primary} />
           <Text style={styles.menuText}>My Listings</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.gray} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/reviews')}>
           <Ionicons name="star-outline" size={22} color={colors.primary} />
           <Text style={styles.menuText}>My Reviews</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.gray} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/conversations')}>
+          <Ionicons name="chatbubbles-outline" size={22} color={colors.primary} />
+          <Text style={styles.menuText}>Messages</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.gray} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/notifications')}>
           <Ionicons name="notifications-outline" size={22} color={colors.primary} />
           <Text style={styles.menuText}>Notifications</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.gray} />

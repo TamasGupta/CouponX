@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
+import { getSocket, connectSocket } from '../../api/socket';
 import { colors } from '../../constants/colors';
 import { useAuthStore } from '../../store/auth';
 
@@ -17,6 +18,7 @@ export default function ChatScreen() {
   const { id } = useLocalSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
+  const token = useAuthStore((s) => s.token);
   const userId = useAuthStore((s) => s.user?.id);
   const flatListRef = useRef<FlatList>(null);
 
@@ -24,6 +26,22 @@ export default function ChatScreen() {
     client.get(`/chat/conversations/${id}/messages`)
       .then(({ data }) => setMessages(data));
   }, [id]);
+
+  useEffect(() => {
+    if (!token) return;
+    const socket = connectSocket(token);
+    socket.emit('join:conversation', id);
+
+    const handler = (message: Message) => {
+      setMessages((prev) => [...prev, message]);
+    };
+    socket.on('message:new', handler);
+
+    return () => {
+      socket.off('message:new', handler);
+      socket.emit('leave:conversation', id);
+    };
+  }, [id, token]);
 
   const sendMessage = async () => {
     if (!text.trim()) return;
@@ -41,6 +59,7 @@ export default function ChatScreen() {
         data={messages}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
         renderItem={({ item }) => {
           const isMine = item.sender._id === userId;

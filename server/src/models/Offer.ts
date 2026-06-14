@@ -24,7 +24,6 @@ const offerSchema = new mongoose.Schema<IOffer>(
     category: {
       type: String,
       required: true,
-      enum: ['swiggy', 'flipkart', 'myntra', 'movie', 'train', 'bus', 'other'],
     },
     images: [{ type: String }],
     seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
