@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image, Dimensions } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image, Dimensions, ScrollView } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
@@ -15,10 +15,11 @@ export default function HomeScreen() {
   const fetchCategories = useCategoriesStore((s) => s.fetchCategories);
   const [banners, setBanners] = useState<any[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
-  const bannerRef = useRef<FlatList>(null);
+  const bannerRef = useRef<ScrollView>(null);
   const bannerIndex = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const offersFetched = useRef(false);
+  const [bannerWidth] = useState(width);
 
   useEffect(() => {
     Promise.all([
@@ -42,15 +43,10 @@ export default function HomeScreen() {
     if (banners.length < 2) return;
     timerRef.current = setInterval(() => {
       bannerIndex.current = (bannerIndex.current + 1) % banners.length;
-      bannerRef.current?.scrollToIndex({ index: bannerIndex.current, animated: true });
-    }, 2000);
+      bannerRef.current?.scrollTo({ x: bannerIndex.current * width, animated: true });
+    }, 4000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [banners.length]);
-
-  const onScrollToIndexFailed = () => {
-    bannerIndex.current = 0;
-    bannerRef.current?.scrollToIndex({ index: 0, animated: true });
-  };
 
   const getCategoryIcon = (slug: string) => {
     const cat = categories.find((c) => c.slug === slug);
@@ -104,21 +100,19 @@ export default function HomeScreen() {
   const ListHeader = () => (
     <>
       {banners.length > 0 && (
-        <FlatList
+        <ScrollView
           ref={bannerRef}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          data={banners}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.bannerList}
-          onScrollToIndexFailed={onScrollToIndexFailed}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.bannerCard} onPress={() => item.link && router.push(item.link)}>
+          style={styles.bannerScroll}
+        >
+          {banners.map((item: any) => (
+            <TouchableOpacity key={item._id} style={styles.bannerCard} onPress={() => item.link && router.push(item.link)}>
               <Image source={{ uri: item.image }} style={styles.bannerImage} />
             </TouchableOpacity>
-          )}
-        />
+          ))}
+        </ScrollView>
       )}
 
       {categories.length > 0 && (
@@ -136,7 +130,7 @@ export default function HomeScreen() {
                 onPress={() => router.push(`/(tabs)/search?category=${item.slug}`)}
               >
                 {item.image ? (
-                  <Image source={{ uri: item.image }} style={styles.chipBg} />
+                  <Image source={{ uri: item.image }} style={styles.chipBg} resizeMode="cover" />
                 ) : null}
                 <Ionicons name={item.icon as any} size={16} color="#333" />
                 <Text style={styles.brandName}>{item.name}</Text>
@@ -173,7 +167,7 @@ export default function HomeScreen() {
   );
 }
 
-const BANNER_HEIGHT = width * 0.42;
+const BANNER_HEIGHT = width * 0.42 + 15;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
@@ -182,10 +176,8 @@ const styles = StyleSheet.create({
   splashLogo: { width: 80, height: 80, borderRadius: 20 },
   splashText: { fontSize: 28, fontWeight: 'bold', color: colors.primary, marginTop: 12 },
 
-  bannerList: { marginBottom: 8 },
-  bannerCard: {
-    width, height: BANNER_HEIGHT,
-  },
+  bannerScroll: { height: BANNER_HEIGHT, marginBottom: 8 },
+  bannerCard: { width, height: BANNER_HEIGHT },
   bannerImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   brandsSection: { marginBottom: 8 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginHorizontal: 20, marginBottom: 12 },
@@ -195,7 +187,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14,
     overflow: 'hidden',
   },
-  chipBg: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', resizeMode: 'cover', borderRadius: 14 },
+  chipBg: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 14 },
   brandName: { fontSize: 12, fontWeight: '600', color: '#333', marginTop: 4 },
   card: {
     marginHorizontal: 20,

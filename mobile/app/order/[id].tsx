@@ -9,9 +9,11 @@ import { useAuthStore } from '../../store/auth';
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams();
   const [order, setOrder] = useState<any>(null);
+  const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
+    if (!token) { router.replace('/(auth)/login'); return; }
     client.get('/orders').then(({ data }) => {
       const all = [...data.bought, ...data.sold];
       setOrder(all.find((o: any) => o._id === id));

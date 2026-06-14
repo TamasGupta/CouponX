@@ -6,10 +6,12 @@ import CategoryPicker from '../../components/CategoryPicker';
 import DatePickerModal from '../../components/DatePickerModal';
 import client from '../../api/client';
 import { useOffersStore } from '../../store/offers';
+import { useAuthStore } from '../../store/auth';
 import { colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function UploadScreen() {
+  const token = useAuthStore((s) => s.token);
   const fetchOffers = useOffersStore((s) => s.fetchOffers);
   const scrollRef = useRef<ScrollView>(null);
   const [title, setTitle] = useState('');
@@ -22,6 +24,21 @@ export default function UploadScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+
+  if (!token) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }]}>
+        <Ionicons name="add-circle-outline" size={72} color={colors.gray} />
+        <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text, marginTop: 16 }}>Login to sell coupons</Text>
+        <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: 8, marginBottom: 24 }}>
+          List your unused coupons and earn
+        </Text>
+        <TouchableOpacity style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 40, paddingVertical: 14 }} onPress={() => router.push('/(auth)/login')}>
+          <Text style={{ color: colors.white, fontSize: 16, fontWeight: '600' }}>Login</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({

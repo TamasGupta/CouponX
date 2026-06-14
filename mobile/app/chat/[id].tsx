@@ -18,13 +18,16 @@ export default function ChatScreen() {
   const { id } = useLocalSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const token = useAuthStore((s) => s.token);
   const userId = useAuthStore((s) => s.user?.id);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
+    if (!token) { router.replace('/(auth)/login'); return; }
     client.get(`/chat/conversations/${id}/messages`)
-      .then(({ data }) => setMessages(data));
+      .then(({ data }) => setMessages(data))
+      .finally(() => setIsLoading(false));
   }, [id]);
 
   useEffect(() => {

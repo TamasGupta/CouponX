@@ -4,6 +4,8 @@ import { User } from '../models/User';
 import { env } from '../config/env';
 import { AuthRequest } from '../middleware/auth';
 
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/tokeninfo';
+
 function generateToken(userId: string) {
   return jwt.sign({ userId }, env.JWT_SECRET, { expiresIn: '7d' });
 }
@@ -41,6 +43,53 @@ export async function login(req: AuthRequest, res: Response) {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const token = generateToken(user._id.toString());
+
+    res.json({
+      token,
+      user: { id: user._id.toString(), name: user.name, email: user.email, avatar: user.avatar },
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+export async function googleLogin(req: AuthRequest, res: Response) {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ message: 'idToken is required' });
+    }
+
+    const verifyRes = await fetch(`${GOOGLE_TOKEN_URL}?id_token=${idToken}`);
+    if (!verifyRes.ok) {
+      return res.status(401).json({ message: 'Invalid Google token' });
+    }
+
+    const payload: any = await verifyRes.json();
+
+    if (env.GOOGLE_CLIENT_ID && payload.aud !== env.GOOGLE_CLIENT_ID) {
+      return res.status(401).json({ message: 'Token audience mismatch' });
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+    if (user) {
+      if (!user.googleId) {
+        user.googleId = googleId;
+        if (picture && !user.avatar) user.avatar = picture;
+        await user.save();
+      }
+    } else {
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email,
+        googleId,
+        avatar: picture,
+      });
     }
 
     const token = generateToken(user._id.toString());

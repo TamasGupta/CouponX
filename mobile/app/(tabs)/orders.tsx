@@ -11,6 +11,7 @@ export default function OrdersScreen() {
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
 
   const startChat = async (participantId: string) => {
     try {
@@ -45,6 +46,17 @@ export default function OrdersScreen() {
 
   return (
     <View style={styles.container}>
+      {!token ? (
+        <View style={styles.center}>
+          <Ionicons name="receipt-outline" size={72} color={colors.gray} />
+          <Text style={styles.loginTitle}>Login to view your orders</Text>
+          <Text style={styles.loginSub}>Track your bought and sold coupons</Text>
+          <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/(auth)/login')}>
+            <Text style={styles.loginBtnText}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+      <> 
       <View style={styles.tabs}>
         <TouchableOpacity style={[styles.tab, tab === 'bought' && styles.tabActive]} onPress={() => setTab('bought')}>
           <Text style={[styles.tabText, tab === 'bought' && styles.tabTextActive]}>Bought</Text>
@@ -91,6 +103,8 @@ export default function OrdersScreen() {
           </View>
         }
       />
+      </>
+      )}
     </View>
   );
 }
@@ -122,4 +136,9 @@ const styles = StyleSheet.create({
   contactText: { fontSize: 13, fontWeight: '600', color: colors.primary },
   empty: { alignItems: 'center', marginTop: 80 },
   emptyText: { fontSize: 16, color: colors.gray, marginTop: 12 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  loginTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginTop: 16 },
+  loginSub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: 8, marginBottom: 24 },
+  loginBtn: { backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 40, paddingVertical: 14 },
+  loginBtnText: { color: colors.white, fontSize: 16, fontWeight: '600' },
 });

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, getProfile, updateProfile } from '../controllers/auth';
+import { register, login, googleLogin, getProfile, updateProfile } from '../controllers/auth';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -119,6 +119,7 @@ const router = Router();
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/google', googleLogin);
 router.get('/me', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfile);
 

@@ -33,7 +33,9 @@
           "photosPermission": "CouponX needs access to your photos to upload coupon images.",
           "cameraPermission": "CouponX needs access to your camera to take coupon photos."
         }
-      ]
+      ],
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "router": {},

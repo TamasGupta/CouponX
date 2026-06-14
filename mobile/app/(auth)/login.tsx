@@ -1,14 +1,33 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../store/auth';
 import { colors } from '../../constants/colors';
+import { Ionicons } from '@expo/vector-icons';
+import { signInWithGoogle, isGoogleSigninAvailable, googleClientId } from '../../services/googleSignin';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, isLoading } = useAuthStore();
+  const { login, googleLogin, isLoading } = useAuthStore();
+
+  const handleGoogle = async () => {
+    if (!isGoogleSigninAvailable()) {
+      Alert.alert('Not Configured', 'Set EXPO_PUBLIC_GOOGLE_CLIENT_ID in your .env file');
+      return;
+    }
+    try {
+      const idToken = await signInWithGoogle();
+      if (idToken) {
+        await googleLogin(idToken);
+        router.replace('/(tabs)');
+      }
+    } catch (err: any) {
+      if (err.code === 'SIGN_IN_CANCELLED') return;
+      setError(err.message || 'Google sign-in failed');
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -60,6 +79,17 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity style={styles.googleButton} onPress={handleGoogle} disabled={isLoading}>
+          <Ionicons name="logo-google" size={20} color="#333" />
+          <Text style={styles.googleButtonText}>Sign in with Google</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
           <Text style={styles.link}>Don't have an account? Register</Text>
         </TouchableOpacity>
@@ -91,5 +121,19 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonText: { color: colors.white, fontSize: 16, fontWeight: '600' },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 24 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  dividerText: { marginHorizontal: 12, color: colors.gray, fontSize: 13 },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  googleButtonText: { color: '#333', fontSize: 15, fontWeight: '600', marginLeft: 10 },
   link: { color: colors.primary, textAlign: 'center', marginTop: 24, fontSize: 14 },
 });
