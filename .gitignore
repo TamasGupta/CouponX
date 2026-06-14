@@ -1,0 +1,14 @@
+.env
+package-lock.json
+CLAUDE.md
+server/.env
+mobile/.env
+node_modules/
+AGENTS.md
+.claude
+PROJECT_PLAN.md
+server/node_modules/
+mobile/node_modules/
+server/package-lock.json
+mobile/package-lock.json
+mobile/AGENTS.md
