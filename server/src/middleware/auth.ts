@@ -25,4 +25,3 @@ export function authenticate(
     return res.status(401).json({ message: "Invalid token" });
   }
 }
-//checking
