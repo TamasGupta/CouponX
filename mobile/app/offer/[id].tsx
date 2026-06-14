@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Dimensions, Clipboard } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
@@ -54,6 +54,7 @@ export default function OfferDetailScreen() {
 
   const isOwner = user?.id === offer.seller?._id;
   const canClaim = token && !isOwner && offer.status === 'active';
+  const isFree = offer.sellingPrice === 0;
 
   const startChat = async () => {
     if (!offer.seller?._id) {
@@ -122,11 +123,31 @@ export default function OfferDetailScreen() {
         </View>
       </View>
 
+      {isFree && offer.status === 'active' && offer.couponCode && (
+        <View style={styles.freeCouponCard}>
+          <View style={styles.freeCouponHeader}>
+            <Ionicons name="pricetag" size={20} color={colors.success} />
+            <Text style={styles.freeCouponLabel}>Free Coupon Code</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.freeCouponRow}
+            onPress={() => {
+              Clipboard.setString(offer.couponCode);
+              Alert.alert('Copied', 'Coupon code copied to clipboard');
+            }}
+          >
+            <Text style={styles.freeCouponCode}>{offer.couponCode}</Text>
+            <Ionicons name="copy-outline" size={22} color={colors.success} />
+          </TouchableOpacity>
+          <Text style={styles.freeCouponHint}>Tap to copy</Text>
+        </View>
+      )}
+
       {canClaim && (
         <>
           <TouchableOpacity style={styles.claimButton} onPress={handleClaim} disabled={isClaiming}>
             <Text style={styles.claimText}>
-              {isClaiming ? 'Claiming...' : offer.sellingPrice === 0 ? 'Claim for Free' : `Buy for ₹${offer.sellingPrice}`}
+              {isClaiming ? 'Claiming...' : isFree ? 'Claim for Free' : `Buy for ₹${offer.sellingPrice}`}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.messageButton} onPress={startChat}>
@@ -137,9 +158,26 @@ export default function OfferDetailScreen() {
       )}
 
       {isOwner && (
-        <View style={styles.ownerNotice}>
-          <Ionicons name="information-circle" size={20} color={colors.primary} />
-          <Text style={styles.ownerText}>This is your listing</Text>
+        <View style={styles.ownerSection}>
+          <View style={styles.ownerNotice}>
+            <Ionicons name="information-circle" size={20} color={colors.primary} />
+            <Text style={styles.ownerText}>This is your listing</Text>
+          </View>
+          {offer.couponCode && (
+            <View style={styles.ownerCouponCard}>
+              <Text style={styles.ownerCouponLabel}>Your Coupon Code</Text>
+              <TouchableOpacity
+                style={styles.ownerCouponRow}
+                onPress={() => {
+                  Clipboard.setString(offer.couponCode);
+                  Alert.alert('Copied', 'Coupon code copied to clipboard');
+                }}
+              >
+                <Text style={styles.ownerCouponCode}>{offer.couponCode}</Text>
+                <Ionicons name="copy-outline" size={20} color={colors.gray} />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       )}
     </ScrollView>
@@ -189,9 +227,29 @@ const styles = StyleSheet.create({
     borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.primary, gap: 8,
   },
   messageButtonText: { fontSize: 15, fontWeight: '600', color: colors.primary },
+  ownerSection: { marginTop: 20, marginHorizontal: 20 },
   ownerNotice: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    marginTop: 20, gap: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
   ownerText: { fontSize: 14, color: colors.primary },
+  ownerCouponCard: { marginTop: 12, backgroundColor: colors.white, borderRadius: 12, padding: 14 },
+  ownerCouponLabel: { fontSize: 12, fontWeight: '600', color: colors.gray, marginBottom: 8 },
+  ownerCouponRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: colors.background, borderRadius: 8, padding: 12,
+  },
+  ownerCouponCode: { fontSize: 16, fontWeight: 'bold', color: colors.text, letterSpacing: 1 },
+  freeCouponCard: {
+    marginHorizontal: 20, marginBottom: 16,
+    backgroundColor: colors.white, borderRadius: 16, padding: 20,
+    borderWidth: 2, borderColor: colors.success, borderStyle: 'dashed',
+  },
+  freeCouponHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  freeCouponLabel: { fontSize: 14, fontWeight: '600', color: colors.success },
+  freeCouponRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: colors.background, borderRadius: 10, padding: 16,
+  },
+  freeCouponCode: { fontSize: 22, fontWeight: 'bold', color: colors.text, letterSpacing: 2 },
+  freeCouponHint: { fontSize: 12, color: colors.gray, textAlign: 'center', marginTop: 8 },
 });

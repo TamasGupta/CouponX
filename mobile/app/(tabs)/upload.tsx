@@ -21,6 +21,7 @@ export default function UploadScreen() {
   const [category, setCategory] = useState('');
   const [expiryDate, setExpiryDate] = useState<Date | undefined>();
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
@@ -104,6 +105,7 @@ export default function UploadScreen() {
         description,
         sellingPrice: parseFloat(sellingPrice) || 0,
         originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
+        couponCode,
         category,
         expiryDate: expiryDate ? expiryDate.toISOString() : undefined,
         images: imageUrls,
@@ -112,7 +114,8 @@ export default function UploadScreen() {
       Alert.alert('Success', 'Offer created successfully!', [
         { text: 'OK', onPress: () => {
           setTitle(''); setDescription(''); setSellingPrice('');
-          setOriginalPrice(''); setCategory(''); setExpiryDate(undefined); setImages([]);
+          setOriginalPrice(''); setCouponCode(''); setCategory('');
+          setExpiryDate(undefined); setImages([]);
           router.replace('/(tabs)');
         }},
       ]);
@@ -203,6 +206,16 @@ export default function UploadScreen() {
         onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
       />
 
+      <Text style={styles.label}>Coupon Code *</Text>
+      <Text style={styles.hint}>For paid coupons, this will be hidden until you confirm the buyer's request. For free coupons, it's visible to everyone.</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="e.g. SAVE20-ABCD"
+        value={couponCode}
+        onChangeText={setCouponCode}
+        autoCapitalize="characters"
+      />
+
       <Text style={styles.label}>Original Price (₹) — optional</Text>
       <TextInput
         style={styles.input}
@@ -240,6 +253,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: 'bold', color: colors.text, marginBottom: 4 },
   subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 24 },
   label: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: 8, marginTop: 8 },
+  hint: { fontSize: 12, color: colors.gray, marginBottom: 8, lineHeight: 16 },
   input: {
     backgroundColor: colors.white,
     borderRadius: 12,

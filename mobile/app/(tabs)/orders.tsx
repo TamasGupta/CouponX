@@ -78,8 +78,15 @@ export default function OrdersScreen() {
               <TouchableOpacity style={styles.cardContent} onPress={() => router.push(`/order/${item._id}`)}>
                 <View style={styles.cardRow}>
                   <Text style={styles.cardTitle} numberOfLines={1}>{item.offer?.title || 'Offer'}</Text>
-                  <View style={[styles.badge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-                    <Text style={[styles.badgeText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+                  <View style={styles.badgesRow}>
+                    {item.couponCode && (
+                      <View style={[styles.badge, { backgroundColor: colors.primary + '20', marginRight: 6 }]}>
+                        <Ionicons name="pricetag" size={12} color={colors.primary} />
+                      </View>
+                    )}
+                    <View style={[styles.badge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+                      <Text style={[styles.badgeText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+                    </View>
                   </View>
                 </View>
                 <Text style={styles.cardDetail}>
@@ -125,6 +132,7 @@ const styles = StyleSheet.create({
   },
   cardContent: { padding: 16 },
   cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  badgesRow: { flexDirection: 'row', alignItems: 'center' },
   cardTitle: { fontSize: 15, fontWeight: '600', flex: 1, color: colors.text },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginLeft: 8 },
   badgeText: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },

@@ -5,6 +5,7 @@ export interface IOffer extends mongoose.Document {
   description: string;
   originalPrice?: number;
   sellingPrice: number;
+  couponCode: string;
   expiryDate?: Date;
   category: string;
   images: string[];
@@ -20,6 +21,7 @@ const offerSchema = new mongoose.Schema<IOffer>(
     description: { type: String, required: true },
     originalPrice: { type: Number },
     sellingPrice: { type: Number, required: true, default: 0 },
+    couponCode: { type: String, required: true },
     expiryDate: { type: Date },
     category: {
       type: String,

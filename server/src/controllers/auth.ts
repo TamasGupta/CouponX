@@ -109,7 +109,7 @@ export async function getProfile(req: AuthRequest, res: Response) {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    res.json({ id: user._id.toString(), name: user.name, email: user.email, avatar: user.avatar });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -128,7 +128,7 @@ export async function updateProfile(req: AuthRequest, res: Response) {
       runValidators: true,
     }).select('-password');
 
-    res.json(user);
+    res.json({ id: user._id.toString(), name: user.name, email: user.email, avatar: user.avatar });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

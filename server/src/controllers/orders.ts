@@ -48,7 +48,8 @@ export async function getMyOrders(req: AuthRequest, res: Response) {
         .populate({ path: 'offer', populate: { path: 'seller', select: 'name avatar' } })
         .sort({ createdAt: -1 }),
       Order.find({ seller: req.userId })
-        .populate({ path: 'offer', populate: { path: 'buyer', select: 'name avatar' } })
+        .populate('offer', 'title sellingPrice images status')
+        .populate('buyer', 'name avatar')
         .sort({ createdAt: -1 }),
     ]);
 
@@ -79,6 +80,17 @@ export async function updateOrderStatus(req: AuthRequest, res: Response) {
       return res.status(403).json({ message: 'Only seller can cancel' });
     }
 
+    if (status === 'confirmed') {
+      if (order.seller.toString() !== req.userId) {
+        return res.status(403).json({ message: 'Only seller can confirm' });
+      }
+      const offer = await Offer.findById(order.offer);
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+      order.couponCode = offer.couponCode;
+    }
+
     order.status = status;
     await order.save();
 
@@ -86,7 +98,12 @@ export async function updateOrderStatus(req: AuthRequest, res: Response) {
       await Offer.findByIdAndUpdate(order.offer, { status: 'active' });
     }
 
-    res.json(order);
+    const populated = await Order.findById(order._id)
+      .populate('offer', 'title sellingPrice images status')
+      .populate('buyer', 'name avatar')
+      .populate('seller', 'name avatar');
+
+    res.json(populated);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

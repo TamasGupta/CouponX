@@ -7,6 +7,7 @@ export interface IOrder extends mongoose.Document {
   type: 'free' | 'paid';
   amount: number;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  couponCode?: string;
   paymentId?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +25,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
       enum: ['pending', 'confirmed', 'completed', 'cancelled'],
       default: 'pending',
     },
+    couponCode: { type: String },
     paymentId: { type: String },
   },
   { timestamps: true }
