@@ -12,4 +12,8 @@ export const env = {
     API_KEY: process.env.CLOUDINARY_API_KEY || "",
     API_SECRET: process.env.CLOUDINARY_API_SECRET || "",
   },
+  RAZORPAY: {
+    KEY_ID: process.env.RAZORPAY_KEY_ID || "",
+    KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || "",
+  },
 };

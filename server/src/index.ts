@@ -16,6 +16,7 @@ import reviewRoutes from './routes/reviews';
 import uploadRoutes from './routes/upload';
 import categoryRoutes from './routes/categories';
 import bannerRoutes from './routes/banners';
+import paymentRoutes from './routes/payment';
 import { seedCategories } from './seed';
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/api/health', (_req, res) => {

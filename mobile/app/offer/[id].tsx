@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Dimensions, Clipboard } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Dimensions } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { colors } from '../../constants/colors';
 import { useAuthStore } from '../../store/auth';
+import { usePayment } from '../../services/payment';
 
 const { width } = Dimensions.get('window');
 
@@ -15,6 +17,7 @@ export default function OfferDetailScreen() {
   const [isClaiming, setIsClaiming] = useState(false);
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
+  const { initiatePayment, RazorpayUI } = usePayment();
 
   useEffect(() => {
     client.get(`/offers/${id}`)
@@ -22,7 +25,38 @@ export default function OfferDetailScreen() {
       .finally(() => setIsLoading(false));
   }, [id]);
 
-  const handleClaim = async () => {
+  const handleClaim = () => {
+    if (isFree) {
+      claimFree();
+    } else {
+      setIsClaiming(true);
+      initiatePayment(id as string, {
+        onSuccess: async (paymentData) => {
+          try {
+            await client.post('/orders', {
+              offerId: id,
+              razorpayPaymentId: paymentData.razorpay_payment_id,
+              razorpayOrderId: paymentData.razorpay_order_id,
+              razorpaySignature: paymentData.razorpay_signature,
+            });
+            Alert.alert('Success', 'Offer claimed! Check your orders.', [
+              { text: 'OK', onPress: () => router.push('/(tabs)/orders') },
+            ]);
+          } catch (err: any) {
+            Alert.alert('Error', err?.response?.data?.message || 'Failed to create order');
+          } finally {
+            setIsClaiming(false);
+          }
+        },
+        onFailure: (error) => {
+          Alert.alert('Payment Failed', error);
+          setIsClaiming(false);
+        },
+      });
+    }
+  };
+
+  const claimFree = async () => {
     setIsClaiming(true);
     try {
       await client.post('/orders', { offerId: id });
@@ -30,7 +64,7 @@ export default function OfferDetailScreen() {
         { text: 'OK', onPress: () => router.push('/(tabs)/orders') },
       ]);
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to claim');
+      Alert.alert('Error', err?.response?.data?.message || 'Failed to claim');
     } finally {
       setIsClaiming(false);
     }
@@ -180,6 +214,8 @@ export default function OfferDetailScreen() {
           )}
         </View>
       )}
+
+      {RazorpayUI}
     </ScrollView>
   );
 }
