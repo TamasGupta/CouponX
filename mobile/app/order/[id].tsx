@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Clipboard } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
@@ -105,6 +106,12 @@ export default function OrderDetailScreen() {
           <Text style={styles.label}>Type</Text>
           <Text style={styles.value}>{order.type === 'free' ? 'Free' : `Paid - ₹${order.amount}`}</Text>
         </View>
+        {order.type === 'paid' && order.paymentId && (
+          <View style={styles.row}>
+            <Ionicons name="card-outline" size={16} color={colors.success} />
+            <Text style={[styles.value, { color: colors.success, fontSize: 12 }]}>Payment completed</Text>
+          </View>
+        )}
         {otherParty && (
           <View style={styles.row}>
             <Text style={styles.label}>{isSeller ? 'Buyer' : 'Seller'}</Text>
